@@ -1,0 +1,4 @@
+name = Test
+description = Sample module for training
+core = 7.x
+package = KEA Training

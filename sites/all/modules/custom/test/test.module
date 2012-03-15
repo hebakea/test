@@ -1,0 +1,211 @@
+<?php
+/** 
+ * Training module
+ */
+
+
+/**
+ * Implement hook_menu
+ */
+function test_menu(){
+  $items = array();
+
+  $items['hello-world'] = array(
+    'page callback' => 'test_hello_world',
+    'access arguments' => array('access hello world'),
+  );
+
+  $items['test-db-stuff'] = array(
+    'page callback' => 'test_db_example',
+    'access arguments' => array('access hello world'),
+  );  
+
+  $items['node/%node/hello-world'] = array(
+    'page callback' => 'test_hello_world2',
+    'access arguments' => array('access hello world'),
+    'type' => MENU_LOCAL_TASK,
+    'title' => 'Hello world'
+  );
+
+  // Add new path for 'goodbye-world'
+
+
+
+  return $items;
+}
+
+
+/**
+ * Example function to demo the DB access function
+ */
+function test_db_example($title=''){
+
+  $something = variable_get('admin_theme','');
+
+
+  if ($title){
+    $sql = 'SELECT nid, title FROM {node} WHERE title = :a_title';
+  }
+  else{
+    $sql = 'SELECT nid, title FROM {node}';
+  }
+
+/**
+  $query = db_select('node');
+  $query->fields('nid','title');
+  $query->condition('title',$title);
+  $result = $query->execute();
+**/
+
+  $result = db_query($sql,array(':a_title'=>$title));
+
+  $output = array();
+
+  foreach($result as $row){
+    $output[] = l($row->title,'node/'.$row->nid) .'<br/>';
+  }
+
+
+  return theme('item_list',array('items'=>$output));
+}
+
+
+
+
+function test_menu_alter(&$items){
+  //$items['admin/people']['access arguments'] = array('some other permission');
+}
+
+
+function test_hello_world2($node){
+
+  return $output;
+}
+
+
+function test_hello_world(){
+
+  $x = drupal_get_form('test_example_form');
+  $output = drupal_render($x);
+
+  return $output;
+}
+
+
+/**
+ * Form building function for my example form
+ */
+function test_example_form(){
+  $form = array();
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your name'),
+    '#required' => true,
+    '#default_value' => t('Enter your name')
+  );
+
+  $form['age'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your age'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save your details'),
+  );
+
+  $form['#submit'] = array('test_example_additional_submit_handler');
+
+  return $form;
+}
+
+
+
+function test_example_form_validate($form, &$form_state){
+  if (!intval($form_state['values']['age'])){
+    form_set_error('age',t('Please enter a numeric value for your age'));
+  }
+}
+
+
+function test_example_form_submit($form, &$form_state){
+  $values = $form_state['values'];
+  drupal_set_message('Your name is '.$values['title'] . ' and you are '.$values['age']);
+
+  $form_state['redirect'] = '';
+}
+
+
+
+
+
+function test_permission() {
+  return array(
+    'access hello world' => array(
+      'title' => t('Access the hello world'),
+      'description' => t('Some description in here'),
+    )
+  );
+}
+
+
+
+function test_example_additional_submit_handler($form,$form_state){
+  drupal_set_message('You have searched for '.$form_state['values']['keys']);
+}
+
+
+
+
+function test_form_alter(&$form, &$form_state, $form_id){
+  if ($form_id == 'search_form'){
+    if (module_exists('devel')){
+      dsm($form);
+    }    
+    $form['basic']['keys']['#title'] = t('Keywords here please');
+    $form['basic']['submit']['#value'] = t('Search this site');
+    $form['advanced']['#collapsed'] = false;
+
+    $form['#submit'][] ='test_example_additional_submit_handler';
+
+    unset($form['advanced']['keywords']['negative']);
+  }
+}
+
+
+
+/**
+ * Block hooks
+ */
+
+function test_block_info(){
+  return array(
+    'user-details' => array('info'=>'TRAINING : User details block'),
+    'user-sadasd' => array('info'=>'TRAINING : asdasdas'),
+  );
+}
+
+
+function test_block_view($delta){
+  if ($delta == 'user-details'){
+    $block = array();
+    $block['subject'] = t('User details');
+
+    global $user;
+    if ($user->uid){
+      $output = 'Welcome back '.l($user->name,'user/'.$user->uid).l('Edit your account','user/'.$user->uid.'/edit');
+    }
+    else{
+      $output = l('Click to login','user');
+    }
+
+    $block['content'] = $output;
+
+    return $block;
+  }
+}
+
+
+
+
